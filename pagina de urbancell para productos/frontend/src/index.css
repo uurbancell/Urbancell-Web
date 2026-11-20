@@ -1,0 +1,748 @@
+:root {
+    --bg-pure-white: #ffffff;
+    --text-primary: #111118;
+    --text-muted: #6e6e73;
+    --violet-electric: #8b5cf6;
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --font-head: 'Space Grotesk', sans-serif;
+    --font-body: 'Outfit', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-pure-white);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* 1. INTRO SPLASH EN PANTALLA COMPLETA */
+.intro-overlay {
+    position: fixed;
+    inset: 0;
+    background: #ffffff;
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), visibility 1s;
+}
+
+.intro-overlay.fade-out {
+    opacity: 0;
+    visibility: hidden;
+}
+
+/* CONTENEDOR FLEX CENTRADO */
+.intro-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0px;
+    transition: gap 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* LOGO OFICIAL - INICIA CENTRADO EN EL MEDIO ABSOLUTO DE LA PANTALLA */
+.intro-logo-box {
+    width: 220px;
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    animation: zoomInLogo 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.intro-logo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
+    box-shadow: 0 15px 40px rgba(139, 92, 246, 0.18);
+}
+
+/* CAJA DE TEXTO: Inicialmente no ocupa ancho para asegurar centrado total del logo */
+.intro-brand-box {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: max-width 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease 0.2s;
+}
+
+/* FASE DE DESPLAZAMIENTO: El logo se desliza a la izquierda y despliega el texto */
+.intro-container.shifted {
+    gap: 35px;
+}
+
+.intro-container.shifted .intro-brand-box {
+    max-width: 600px;
+    opacity: 1;
+}
+
+/* TÍTULO URBANCELL Y LETRAS */
+.intro-title {
+    font-family: var(--font-head);
+    font-size: 5rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    display: flex;
+    line-height: 1;
+}
+
+.char {
+    opacity: 0;
+    transform: translateY(20px) scale(0.8);
+    display: inline-block;
+    animation: letterReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.char.urban-char {
+    color: #111118;
+    /* Negro */
+}
+
+.char.cell-char {
+    color: #8b5cf6;
+    /* Violeta Urbancell */
+}
+
+.intro-subtitle {
+    font-family: var(--font-head);
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 12px;
+    color: #8b5cf6;
+    margin-top: 12px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 1.7s ease 1.5s, transform 1.7s ease 1.5s;
+}
+
+.intro-container.shifted .intro-subtitle {
+    opacity: 0.95;
+    transform: translateY(0);
+}
+
+@keyframes zoomInLogo {
+    0% {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes letterReveal {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 2. HEADER INTELIGENTE AUTO-HIDE */
+.smart-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 12px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-subtle);
+    z-index: 1000;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.smart-header.header-hidden {
+    transform: translateY(-100%);
+}
+
+.header-left {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 15px;
+}
+
+.header-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-logo-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+
+.logo-name {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #111118;
+}
+
+.logo-name span {
+    color: var(--violet-electric);
+}
+
+.menu-hamburger {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 5px;
+}
+
+.menu-hamburger span {
+    width: 22px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+}
+
+.search-trigger {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border-subtle);
+}
+
+.search-trigger input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    width: 110px;
+    color: var(--text-primary);
+}
+
+.currency-select {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+/* NAV DRAWER */
+.nav-drawer {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 300px;
+    height: 100vh;
+    background: var(--bg-pure-white);
+    border-right: 1px solid var(--border-subtle);
+    z-index: 2000;
+    padding: 40px 25px;
+    transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-drawer.active {
+    left: 0;
+}
+
+.close-drawer {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+.drawer-header {
+    font-family: var(--font-head);
+    font-weight: 900;
+    font-size: 1.4rem;
+    margin-bottom: 30px;
+}
+
+.drawer-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.drawer-links a {
+    text-decoration: none;
+    color: var(--text-primary);
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.main-layout {
+    padding-top: 10px;
+    min-height: 0vh;
+}
+
+/* ADAPTACIÓN A DISPOSITIVOS MÓVILES Y TABLETS */
+@media (max-width: 900px) {
+    .intro-logo-box {
+        width: 160px;
+        height: 160px;
+    }
+
+    .intro-title {
+        font-size: 3.5rem;
+    }
+
+    .intro-subtitle {
+        font-size: 1rem;
+        letter-spacing: 8px;
+    }
+
+    .intro-container.shifted {
+        gap: 25px;
+    }
+}
+
+@media (max-width: 600px) {
+    .intro-logo-box {
+        width: 110px;
+        height: 110px;
+    }
+
+    .intro-title {
+        font-size: 2.2rem;
+    }
+
+    .intro-subtitle {
+        font-size: 0.75rem;
+        letter-spacing: 5px;
+    }
+
+    .intro-container.shifted {
+        gap: 15px;
+    }
+}
+
+/* ==========================================
+   ESTILOS HERO ASSISTANT
+   ========================================== */
+.hero-section {
+    width: 100%;
+    padding: 40px 20px 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at 50% 20%, rgba(139, 92, 246, 0.08) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.hero-section.hidden {
+    display: none !important;
+}
+
+/* ==========================================
+   GRILLA DE PRODUCTOS Y CATÁLOGO
+   ========================================== */
+.catalog-section {
+    width: 100%;
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+    animation: fadeInCatalog 0.5s ease-out forwards;
+}
+
+.catalog-section.hidden {
+    display: none !important;
+}
+
+.catalog-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-family: var(--font-head);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.titulo-izq {
+    color: var(--text-muted);
+}
+
+.marca-der .color-1 {
+    color: var(--violet-electric);
+}
+
+.marca-der .color-2 {
+    color: var(--text-muted);
+}
+
+.titulo-izq {
+    color: var(--text-primary);
+    /* Color de "Catálogo" */
+}
+
+.section-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.catalog-filters {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+
+.filter-tab {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #334155;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-tab.active,
+.filter-tab:hover {
+    background: var(--violet-electric);
+    color: #ffffff;
+    border-color: var(--violet-electric);
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 24px;
+    width: 100%;
+}
+
+.catalog-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.catalog-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.card-img-wrapper {
+    width: 100%;
+    height: 160px;
+    background: #f8fafc;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.card-img-wrapper img {
+    max-width: 100% !important;
+    max-height: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain;
+}
+
+.card-category-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--violet-electric);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.card-title {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+}
+
+.card-description {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 16px;
+}
+
+.card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.card-price {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.card-wa-btn {
+    background: #25d366;
+    color: #ffffff;
+    text-decoration: none;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.2s ease;
+}
+
+.card-wa-btn:hover {
+    transform: scale(1.05);
+}
+
+@keyframes fadeInCatalog {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   ESTILOS FORMULARIO DE CONTACTO
+   ========================================== */
+.contact-section {
+    width: 100%;
+    max-width: 600px;
+    margin: 60px auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.contact-card {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 24px;
+    padding: 40px 30px;
+    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.contact-card:hover {
+    box-shadow: 0 25px 50px rgba(139, 92, 246, 0.12);
+}
+
+.contact-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    font-family: var(--font-head);
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    background: #ffffff;
+    border-color: var(--violet-electric);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+}
+
+/* BOTÓN DE ENVÍO UNIFICADO Y LIMPIO */
+#submitBtn {
+    width: 100%;
+    margin-top: 25px;
+    padding: 16px 24px;
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    background: linear-gradient(135deg, #110820, #0d0617);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+#submitBtn:hover {
+    background: linear-gradient(135deg, #6d28d9, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}
+
+#submitBtn:active {
+    transform: translateY(0);
+}
+
+#submitBtn:disabled {
+    background: #cbd5e1;
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Respuesta sutil sin recarga */
+.form-response {
+    margin-top: 15px;
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    text-align: center;
+    padding: 10px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.form-response.visible {
+    opacity: 1;
+}
+
+@media (max-width: 600px) {
+    .contact-card {
+        padding: 30px 20px;
+    }
+}
+
+/* FIX RESPONSIVE HEADER EN CELULARES */
+@media (max-width: 600px) {
+    .smart-header {
+        padding: 10px 12px;
+        gap: 6px;
+    }
+
+    .logo-name {
+        font-size: 1.05rem;
+    }
+
+    .header-logo-img {
+        width: 32px;
+        height: 32px;
+    }
+
+    .header-right {
+        gap: 6px;
+    }
+
+    /* Compactamos el buscador en móvil para que entre perfecto el selector de moneda */
+    .search-trigger {
+        padding: 6px 8px;
+    }
+
+    .search-trigger input {
+        width: 65px;
+        font-size: 0.78rem;
+    }
+
+    .currency-select {
+        padding: 6px 6px;
+        font-size: 0.78rem;
+        flex-shrink: 0;
+        /* Evita que el navegador aplaste u oculte el selector */
+    }
+}
