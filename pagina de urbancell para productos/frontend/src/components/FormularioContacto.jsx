@@ -1,6 +1,14 @@
 import { useState } from 'react';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const rawApiUrl =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV
+    ? 'http://localhost:4000/api'
+    : 'https://urbancell-web.onrender.com/api');
+
+const API_URL = rawApiUrl.endsWith('/api')
+  ? rawApiUrl
+  : `${rawApiUrl.replace(/\/+$/, '')}/api`;
 
 export default function FormularioContacto() {
   const [nombre, setNombre] = useState('');

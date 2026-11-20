@@ -12,7 +12,15 @@ import AsistenteUrbancell from './components/AsistenteUrbancell';
 import { productos } from './data/productos';
 import './App.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const rawApiUrl =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV
+    ? 'http://localhost:4000/api'
+    : 'https://urbancell-web.onrender.com/api');
+
+const API_URL = rawApiUrl.endsWith('/api')
+  ? rawApiUrl
+  : `${rawApiUrl.replace(/\/+$/, '')}/api`;
 const BACKEND_BASE_URL = API_URL.replace(/\/api\/?$/, '') || 'http://localhost:4000';
 const CORREO_ADMIN = 'lautaemer09@gmail.com';
 const CLAVE_ADMIN = 'Urb@Cell#2026!Pay';
@@ -45,8 +53,8 @@ const normalizarProducto = (prod) => {
     Array.isArray(prod.imagenes) && prod.imagenes.length > 0
       ? prod.imagenes
       : prod.imagen
-      ? [prod.imagen]
-      : ['/logo.jpg'];
+        ? [prod.imagen]
+        : ['/logo.jpg'];
 
   const tituloFinal = prod.titulo || prod.nombre || 'Producto sin nombre';
   const precioFinal = Number(prod.precioUyu ?? prod.precio ?? 0);
@@ -281,8 +289,8 @@ export default function App() {
       Array.isArray(prod.imagenes) && prod.imagenes.length > 0
         ? prod.imagenes
         : prod.imagen
-        ? [prod.imagen]
-        : ['/logo.jpg'];
+          ? [prod.imagen]
+          : ['/logo.jpg'];
 
     setProductoEditando(idActual);
     setEditNombre(prod.nombre || prod.titulo || '');
@@ -539,8 +547,8 @@ export default function App() {
                 estrellaOcultaEnAdmin
                   ? '__OCULTO__'
                   : productoEstrella
-                  ? String(productoEstrella.id || productoEstrella._id)
-                  : ''
+                    ? String(productoEstrella.id || productoEstrella._id)
+                    : ''
               }
               onChange={(e) => {
                 const val = e.target.value;
@@ -787,9 +795,8 @@ export default function App() {
                 <img
                   key={`${productoEstrella.id}-${indiceFotoEstrella}`}
                   src={fotoEstrellaActiva}
-                  alt={`${productoEstrella.nombre || productoEstrella.titulo} - foto ${
-                    indiceFotoEstrella + 1
-                  }`}
+                  alt={`${productoEstrella.nombre || productoEstrella.titulo} - foto ${indiceFotoEstrella + 1
+                    }`}
                   className="book-estrella-foto-banner girar-izq-der"
                   onClick={() => setProductoSeleccionado(productoEstrella)}
                 />
@@ -815,9 +822,8 @@ export default function App() {
                       <button
                         key={idx}
                         type="button"
-                        className={`book-miniatura-btn ${
-                          idx === indiceFotoEstrella ? 'activa' : ''
-                        }`}
+                        className={`book-miniatura-btn ${idx === indiceFotoEstrella ? 'activa' : ''
+                          }`}
                         onClick={() => setIndiceFotoEstrella(idx)}
                         aria-label={`Ver foto ${idx + 1}`}
                       >
@@ -935,9 +941,8 @@ export default function App() {
                     return (
                       <div
                         key={item.id}
-                        className={`carrito-item ${
-                          estaSeleccionado ? 'item-seleccionado' : 'item-deseleccionado'
-                        }`}
+                        className={`carrito-item ${estaSeleccionado ? 'item-seleccionado' : 'item-deseleccionado'
+                          }`}
                       >
                         <input
                           type="checkbox"
