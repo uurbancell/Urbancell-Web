@@ -1,2 +1,3 @@
 Commit 4: Revision de estructura y rutas
 Commit 5: Ajustes de estilo blanco y negro
+Commit 6: Revision de tarjetas de productos
