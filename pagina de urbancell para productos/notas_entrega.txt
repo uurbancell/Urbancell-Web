@@ -9,3 +9,4 @@ Commit 11: Revision de animaciones
 Commit 12: Ajustes responsive en movil
 Commit 13: Revision de enlaces y rutas
 Commit 14: Control de calidad previo a entrega
+Commit 15: Version lista para entrega
