@@ -9,7 +9,7 @@ import PanelAgregarProducto from './components/PanelAgregarProducto';
 import FormularioContacto from './components/FormularioContacto';
 import PiePagina from './components/PiePagina';
 import AsistenteUrbancell from './components/AsistenteUrbancell';
-import { productos } from './Data/productos';
+import { productos } from './data/productos';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
