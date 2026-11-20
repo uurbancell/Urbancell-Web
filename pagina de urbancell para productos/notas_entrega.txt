@@ -1,1 +1,2 @@
 Commit 4: Revision de estructura y rutas
+Commit 5: Ajustes de estilo blanco y negro
