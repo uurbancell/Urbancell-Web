@@ -8,14 +8,18 @@ import MenuLateral from './components/MenuLateral';
 import PanelAgregarProducto from './components/PanelAgregarProducto';
 import FormularioContacto from './components/FormularioContacto';
 import PiePagina from './components/PiePagina';
+import AsistenteUrbancell from './components/AsistenteUrbancell';
 import { productos } from './Data/productos';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const BACKEND_BASE_URL = API_URL.replace(/\/api\/?$/, '') || 'http://localhost:4000';
 const CORREO_ADMIN = 'lautaemer09@gmail.com';
 const CLAVE_ADMIN = 'Urb@Cell#2026!Pay';
 const STORAGE_KEY = 'urbancell_productos_tienda';
 const CARRITO_KEY = 'urbancell_carrito';
+const ESTRELLA_KEY = 'urbancell_producto_estrella_id';
+const ESTRELLA_OCULTA_KEY = 'urbancell_producto_estrella_oculto';
 const CATEGORIAS_VALIDAS = ['audio', 'carga', 'fundas'];
 
 // Cambia esto por tu número real en formato internacional sin '+' ni espacios (ej: 59899123456)
@@ -86,6 +90,23 @@ export default function App() {
   const [esAdmin, setEsAdmin] = useState(false);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
 
+  // Producto estrella (solo se selecciona desde el Modo Admin)
+  const [productoEstrellaId, setProductoEstrellaId] = useState(() => {
+    try {
+      return localStorage.getItem(ESTRELLA_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
+  const [estrellaOcultaEnAdmin, setEstrellaOcultaEnAdmin] = useState(() => {
+    try {
+      return localStorage.getItem(ESTRELLA_OCULTA_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [indiceFotoEstrella, setIndiceFotoEstrella] = useState(0);
+
   // Estado para modificar un producto existente en el Modo Admin
   const [productoEditando, setProductoEditando] = useState(null);
   const [editNombre, setEditNombre] = useState('');
@@ -141,6 +162,35 @@ export default function App() {
     }
   }, [carrito]);
 
+  useEffect(() => {
+    try {
+      if (productoEstrellaId) {
+        localStorage.setItem(ESTRELLA_KEY, String(productoEstrellaId));
+      } else {
+        localStorage.removeItem(ESTRELLA_KEY);
+      }
+      localStorage.setItem(
+        ESTRELLA_OCULTA_KEY,
+        String(Boolean(estrellaOcultaEnAdmin))
+      );
+    } catch {
+      // Ignorar errores de escritura
+    }
+    setIndiceFotoEstrella(0);
+  }, [productoEstrellaId, estrellaOcultaEnAdmin]);
+
+  // Cerrar el carrito con la tecla Escape, igual que un menú desplegable
+  useEffect(() => {
+    if (!carritoAbierto) return;
+    const manejarTecla = (e) => {
+      if (e.key === 'Escape') {
+        setCarritoAbierto(false);
+      }
+    };
+    window.addEventListener('keydown', manejarTecla);
+    return () => window.removeEventListener('keydown', manejarTecla);
+  }, [carritoAbierto]);
+
   const cargarCambiosDelAdmin = async () => {
     try {
       const res = await fetch(`${API_URL}/productos`);
@@ -170,6 +220,30 @@ export default function App() {
     window.addEventListener('focus', alVolver);
     return () => window.removeEventListener('focus', alVolver);
   }, []);
+
+  const productoSeleccionadoEstrella =
+    listaProductos.find(
+      (p) => String(p.id || p._id) === String(productoEstrellaId)
+    ) || null;
+
+  const productoEstrella = estrellaOcultaEnAdmin
+    ? null
+    : productoSeleccionadoEstrella || listaProductos[0] || null;
+
+  const fotosEstrella = productoEstrella
+    ? Array.isArray(productoEstrella.imagenes) && productoEstrella.imagenes.length > 0
+      ? productoEstrella.imagenes
+      : [productoEstrella.imagen || '/logo.jpg']
+    : [];
+
+  // Rotación automática de izquierda a derecha del book del producto estrella
+  useEffect(() => {
+    if (!productoEstrella || fotosEstrella.length <= 1 || esAdmin) return;
+    const intervalo = setInterval(() => {
+      setIndiceFotoEstrella((prev) => (prev + 1) % fotosEstrella.length);
+    }, 3200);
+    return () => clearInterval(intervalo);
+  }, [productoEstrella, fotosEstrella.length, esAdmin]);
 
   const handleToggleAdmin = () => {
     if (esAdmin) {
@@ -302,19 +376,26 @@ export default function App() {
     setListaProductos((prev) =>
       prev.filter((prod) => (prod.id || prod._id) !== idProducto)
     );
+    if (String(productoEstrellaId) === String(idProducto)) {
+      setProductoEstrellaId('');
+    }
     if (productoEditando === idProducto) {
       setProductoEditando(null);
     }
   };
 
-  // Funciones del carrito de compras
+  // Funciones del carrito de compras (no abre el carrito automáticamente al agregar)
   const agregarAlCarrito = (prod) => {
     const normalizado = normalizarProducto(prod);
     setCarrito((prev) => {
       const idx = prev.findIndex((item) => String(item.id) === String(normalizado.id));
       if (idx >= 0) {
         const copia = [...prev];
-        copia[idx] = { ...copia[idx], cantidad: copia[idx].cantidad + 1 };
+        copia[idx] = {
+          ...copia[idx],
+          cantidad: copia[idx].cantidad + 1,
+          seleccionado: true,
+        };
         return copia;
       }
       return [
@@ -325,10 +406,28 @@ export default function App() {
           precioUyu: Number(normalizado.precioUyu ?? normalizado.precio ?? 0),
           imagen: normalizado.imagenes?.[0] || normalizado.imagen || '/logo.jpg',
           cantidad: 1,
+          seleccionado: true,
         },
       ];
     });
-    setCarritoAbierto(true);
+  };
+
+  const toggleSeleccionItem = (idItem) => {
+    setCarrito((prev) =>
+      prev.map((item) =>
+        String(item.id) === String(idItem)
+          ? { ...item, seleccionado: item.seleccionado === false ? true : false }
+          : item
+      )
+    );
+  };
+
+  const deseleccionarItemConX = (idItem) => {
+    setCarrito((prev) =>
+      prev.map((item) =>
+        String(item.id) === String(idItem) ? { ...item, seleccionado: false } : item
+      )
+    );
   };
 
   const cambiarCantidadCarrito = (idItem, delta) => {
@@ -356,17 +455,22 @@ export default function App() {
       : Math.round(convertido * 100) / 100;
   };
 
-  const totalCarritoMoneda = carrito.reduce(
+  const itemsSeleccionados = carrito.filter((item) => item.seleccionado !== false);
+
+  const totalCarritoMoneda = itemsSeleccionados.reduce(
     (acc, item) => acc + convertirPrecioDesdeUyu(item.precioUyu) * item.cantidad,
     0
   );
 
-  const cantidadTotalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
+  const cantidadTotalItems = itemsSeleccionados.reduce(
+    (acc, item) => acc + item.cantidad,
+    0
+  );
 
   const enviarPedidoWhatsApp = () => {
-    if (carrito.length === 0) return;
+    if (itemsSeleccionados.length === 0) return;
 
-    const lineas = carrito.map((item) => {
+    const lineas = itemsSeleccionados.map((item) => {
       const unitario = convertirPrecioDesdeUyu(item.precioUyu);
       const subtotal = unitario * item.cantidad;
       return `• ${item.nombre} x${item.cantidad} (${moneda} ${unitario}) = ${moneda} ${subtotal}`;
@@ -424,6 +528,42 @@ export default function App() {
               Salir y volver a la tienda
             </button>
           </div>
+
+          <section className="panel-agregar panel-estrella-admin">
+            <h3>⭐ Producto Estrella de la Página</h3>
+            <p className="admin-subtexto">
+              Selecciona qué producto se mostrará en el book giratorio superior de la tienda.
+            </p>
+            <select
+              value={
+                estrellaOcultaEnAdmin
+                  ? '__OCULTO__'
+                  : productoEstrella
+                  ? String(productoEstrella.id || productoEstrella._id)
+                  : ''
+              }
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '__OCULTO__') {
+                  setEstrellaOcultaEnAdmin(true);
+                } else {
+                  setEstrellaOcultaEnAdmin(false);
+                  setProductoEstrellaId(val);
+                }
+              }}
+              className="select-producto-estrella"
+            >
+              <option value="__OCULTO__">— Ninguno (ocultar en la página) —</option>
+              {listaProductos.map((prod) => {
+                const idProd = String(prod.id || prod._id);
+                return (
+                  <option key={idProd} value={idProd}>
+                    {prod.nombre || prod.titulo} ({prod.categoria})
+                  </option>
+                );
+              })}
+            </select>
+          </section>
 
           <section id="admin-panel">
             <PanelAgregarProducto
@@ -535,12 +675,19 @@ export default function App() {
               listaProductos.map((prod) => {
                 const idActual = prod.id || prod._id;
                 const imgSrc = prod.imagenes?.[0] || prod.imagen || '/logo.jpg';
+                const esEstrellaActual =
+                  productoEstrella &&
+                  String(productoEstrella.id || productoEstrella._id) === String(idActual);
+
                 return (
                   <div key={idActual} className="admin-item">
                     <div className="admin-item-info">
                       <img src={imgSrc} alt={prod.nombre || prod.titulo} />
                       <div>
-                        <strong>{prod.nombre || prod.titulo}</strong>
+                        <strong>
+                          {prod.nombre || prod.titulo}{' '}
+                          {esEstrellaActual ? '⭐ Estrella' : ''}
+                        </strong>
                         <span>
                           {prod.categoria} · ${prod.precioUyu ?? prod.precio} ·{' '}
                           {(prod.imagenes?.length || 1)} foto(s)
@@ -573,6 +720,9 @@ export default function App() {
     );
   }
 
+  const fotoEstrellaActiva =
+    fotosEstrella[indiceFotoEstrella % fotosEstrella.length] || '/logo.jpg';
+
   return (
     <div className="app-container">
       <Encabezado
@@ -591,6 +741,107 @@ export default function App() {
       />
 
       <Hero />
+
+      {productoEstrella && (
+        <section className="book-estrella-section" aria-label="Producto Estrella">
+          <div className="banner-estrella-editorial">
+            <div className="banner-estrella-izq">
+              <span className="banner-estrella-pill">
+                ★ PRODUCTO ESTRELLA · {productoEstrella.categoria}
+              </span>
+
+              <h2>{productoEstrella.nombre || productoEstrella.titulo}</h2>
+
+              <p className="banner-estrella-desc">
+                {productoEstrella.descripcion ||
+                  'Selección destacada de URBAN CELL® con garantía y entrega directa en Paysandú.'}
+              </p>
+
+              <div className="banner-estrella-precio">
+                {moneda}{' '}
+                {convertirPrecioDesdeUyu(
+                  productoEstrella.precioUyu ?? productoEstrella.precio
+                )}
+              </div>
+
+              <div className="banner-estrella-botones">
+                <button
+                  type="button"
+                  className="btn-estrella-comprar"
+                  onClick={() => agregarAlCarrito(productoEstrella)}
+                >
+                  Agregar al carrito
+                </button>
+                <button
+                  type="button"
+                  className="btn-estrella-detalles"
+                  onClick={() => setProductoSeleccionado(productoEstrella)}
+                >
+                  Ver book completo
+                </button>
+              </div>
+            </div>
+
+            <div className="banner-estrella-der">
+              <div className="book-estrella-stage">
+                <img
+                  key={`${productoEstrella.id}-${indiceFotoEstrella}`}
+                  src={fotoEstrellaActiva}
+                  alt={`${productoEstrella.nombre || productoEstrella.titulo} - foto ${
+                    indiceFotoEstrella + 1
+                  }`}
+                  className="book-estrella-foto-banner girar-izq-der"
+                  onClick={() => setProductoSeleccionado(productoEstrella)}
+                />
+              </div>
+
+              {fotosEstrella.length > 1 && (
+                <div className="book-estrella-barra">
+                  <button
+                    type="button"
+                    className="book-flecha-btn"
+                    onClick={() =>
+                      setIndiceFotoEstrella(
+                        (prev) => (prev - 1 + fotosEstrella.length) % fotosEstrella.length
+                      )
+                    }
+                    aria-label="Foto anterior"
+                  >
+                    &lsaquo;
+                  </button>
+
+                  <div className="book-miniaturas">
+                    {fotosEstrella.map((foto, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className={`book-miniatura-btn ${
+                          idx === indiceFotoEstrella ? 'activa' : ''
+                        }`}
+                        onClick={() => setIndiceFotoEstrella(idx)}
+                        aria-label={`Ver foto ${idx + 1}`}
+                      >
+                        <img src={foto} alt={`Foto ${idx + 1}`} />
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="book-flecha-btn"
+                    onClick={() =>
+                      setIndiceFotoEstrella((prev) => (prev + 1) % fotosEstrella.length)
+                    }
+                    aria-label="Siguiente foto"
+                  >
+                    &rsaquo;
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       <main className="main-layout" id="catalogo">
         <section className="catalog-section">
@@ -641,7 +892,6 @@ export default function App() {
         </section>
       </main>
 
-      {/* Botón flotante y cajón del Carrito de Compras */}
       <button
         type="button"
         className="btn-carrito-flotante"
@@ -651,88 +901,132 @@ export default function App() {
       </button>
 
       {carritoAbierto && (
-        <aside className="carrito-panel">
-          <div className="carrito-header">
-            <h3>Tu Pedido</h3>
-            <button
-              type="button"
-              className="close-drawer"
-              onClick={() => setCarritoAbierto(false)}
-              aria-label="Cerrar carrito"
-            >
-              &times;
-            </button>
-          </div>
+        <div
+          className="carrito-backdrop"
+          onClick={() => setCarritoAbierto(false)}
+        >
+          <aside
+            className="carrito-panel"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="carrito-header">
+              <h3>Tu Pedido</h3>
+              <button
+                type="button"
+                className="close-drawer"
+                onClick={() => setCarritoAbierto(false)}
+                aria-label="Cerrar carrito"
+              >
+                &times;
+              </button>
+            </div>
 
-          {carrito.length === 0 ? (
-            <p className="admin-subtexto">Tu carrito está vacío.</p>
-          ) : (
-            <>
-              <div className="carrito-items">
-                {carrito.map((item) => {
-                  const precioUnit = convertirPrecioDesdeUyu(item.precioUyu);
-                  return (
-                    <div key={item.id} className="carrito-item">
-                      <img src={item.imagen} alt={item.nombre} />
-                      <div className="carrito-item-info">
-                        <strong>{item.nombre}</strong>
-                        <span>
-                          {moneda} {precioUnit}
-                        </span>
-                        <div className="carrito-controles">
-                          <button
-                            type="button"
-                            onClick={() => cambiarCantidadCarrito(item.id, -1)}
-                          >
-                            -
-                          </button>
-                          <span>{item.cantidad}</span>
-                          <button
-                            type="button"
-                            onClick={() => cambiarCantidadCarrito(item.id, 1)}
-                          >
-                            +
-                          </button>
-                          <button
-                            type="button"
-                            className="btn-quitar-item"
-                            onClick={() => quitarDelCarrito(item.id)}
-                          >
-                            Quitar
-                          </button>
+            {carrito.length === 0 ? (
+              <p className="admin-subtexto">
+                Usa "Agregar al carrito" en cualquier producto para armar tu pedido.
+              </p>
+            ) : (
+              <>
+                <div className="carrito-items">
+                  {carrito.map((item) => {
+                    const estaSeleccionado = item.seleccionado !== false;
+                    const precioUnit = convertirPrecioDesdeUyu(item.precioUyu);
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`carrito-item ${
+                          estaSeleccionado ? 'item-seleccionado' : 'item-deseleccionado'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="carrito-checkbox"
+                          checked={estaSeleccionado}
+                          onChange={() => toggleSeleccionItem(item.id)}
+                          aria-label={`Seleccionar ${item.nombre}`}
+                        />
+                        <img
+                          src={item.imagen || '/logo.jpg'}
+                          alt={item.nombre}
+                        />
+                        <div className="carrito-item-info">
+                          <strong>{item.nombre}</strong>
+                          <span>
+                            {moneda} {precioUnit}
+                          </span>
+                          <div className="carrito-controles">
+                            <button
+                              type="button"
+                              onClick={() => cambiarCantidadCarrito(item.id, -1)}
+                            >
+                              -
+                            </button>
+                            <span>{item.cantidad}</span>
+                            <button
+                              type="button"
+                              onClick={() => cambiarCantidadCarrito(item.id, 1)}
+                            >
+                              +
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-quitar-item"
+                              onClick={() => quitarDelCarrito(item.id)}
+                            >
+                              Quitar
+                            </button>
+                          </div>
                         </div>
+                        <button
+                          type="button"
+                          className="btn-deseleccionar-x"
+                          onClick={() => deseleccionarItemConX(item.id)}
+                          aria-label="Deseleccionar producto"
+                        >
+                          &times;
+                        </button>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="carrito-footer">
-                <div className="carrito-total">
-                  <span>Total:</span>
-                  <strong>
-                    {moneda} {totalCarritoMoneda}
-                  </strong>
+                    );
+                  })}
                 </div>
-                <button
-                  type="button"
-                  className="btn-primario btn-whatsapp-pedido"
-                  onClick={enviarPedidoWhatsApp}
-                >
-                  Enviar pedido por WhatsApp
-                </button>
-              </div>
-            </>
-          )}
-        </aside>
+
+                <div className="carrito-footer">
+                  <div className="carrito-total">
+                    <span>Total:</span>
+                    <strong>
+                      {moneda} {totalCarritoMoneda}
+                    </strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-primario btn-whatsapp-pedido"
+                    onClick={enviarPedidoWhatsApp}
+                    disabled={itemsSeleccionados.length === 0}
+                  >
+                    Pedir por WhatsApp
+                  </button>
+                </div>
+              </>
+            )}
+          </aside>
+        </div>
       )}
 
-      <ProductoModal
-        producto={productoSeleccionado}
-        moneda={moneda}
-        onClose={() => setProductoSeleccionado(null)}
-        onAgregarCarrito={agregarAlCarrito}
+      {/* Asistente IA Recomendador de URBAN CELL® */}
+      <AsistenteUrbancell
+        apiUrl={BACKEND_BASE_URL}
+        productos={listaProductos}
       />
+
+      {productoSeleccionado && (
+        <ProductoModal
+          producto={productoSeleccionado}
+          moneda={moneda}
+          onClose={() => setProductoSeleccionado(null)}
+          onAgregarCarrito={agregarAlCarrito}
+        />
+      )}
 
       <PiePagina />
     </div>

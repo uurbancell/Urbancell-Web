@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import Producto from './models/Producto.js';
+import iaRoutes from './routes/ia.routes.js';
 
 dotenv.config();
 
@@ -14,15 +15,67 @@ app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ limit: '15mb', extended: true }));
 
+// Ruta de IA personalizada
+app.use('/api/ia', iaRoutes);
+
 // Conexión a MongoDB Atlas
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ Conectado a MongoDB'))
   .catch((err) => console.error('❌ Error al conectar a MongoDB:', err));
 
+// Modelo para consultas de Atención Directa en MongoDB
+const consultaSchema = new mongoose.Schema(
+  {
+    nombre: { type: String, required: true, trim: true },
+    email: { type: String, default: '', trim: true },
+    consulta: { type: String, required: true, trim: true },
+  },
+  { timestamps: true }
+);
+
+const Consulta =
+  mongoose.models.Consulta || mongoose.model('Consulta', consultaSchema);
+
 // Ruta de prueba para verificar que el servidor está vivo
 app.get('/', (req, res) => {
   res.send('API de URBAN CELL® funcionando correctamente');
+});
+
+// Ruta POST: Guardar consulta de Atención Directa en MongoDB
+app.post('/api/contacto', async (req, res) => {
+  try {
+    const { nombre, email, consulta, mensaje } = req.body || {};
+    const nombreLimpio = String(nombre || '').trim();
+    const emailLimpio = String(email || '').trim();
+    const consultaLimpia = String(consulta || mensaje || '').trim();
+
+    if (!nombreLimpio || !consultaLimpia) {
+      return res.status(400).json({
+        ok: false,
+        error: 'El nombre y la consulta son obligatorios.',
+      });
+    }
+
+    const creada = await Consulta.create({
+      nombre: nombreLimpio,
+      email: emailLimpio,
+      consulta: consultaLimpia,
+    });
+
+    return res.status(201).json({
+      ok: true,
+      id: creada._id,
+      data: creada,
+    });
+  } catch (error) {
+    console.error('❌ Error al guardar consulta en MongoDB:', error);
+    return res.status(500).json({
+      ok: false,
+      error: 'Error al guardar la consulta en MongoDB.',
+      detalle: error.message,
+    });
+  }
 });
 
 // 1. GET: Obtener todos los productos

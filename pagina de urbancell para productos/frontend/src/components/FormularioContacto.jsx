@@ -1,48 +1,64 @@
 import { useState } from 'react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
 export default function FormularioContacto() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const [respuestaForm, setRespuestaForm] = useState({ texto: '', tipo: '' });
+  const [estadoMensaje, setEstadoMensaje] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nombre.trim() || !email.trim() || !mensaje.trim()) {
-      setRespuestaForm({ texto: "Por favor, completa todos los campos.", tipo: "error" });
+    const nombreLimpio = nombre.trim();
+    const emailLimpio = email.trim();
+    const consultaLimpia = mensaje.trim();
+
+    if (!nombreLimpio || !consultaLimpia) {
+      setEstadoMensaje({
+        tipo: 'aviso',
+        texto: 'Completa tu nombre y tu consulta antes de enviar.',
+      });
       return;
     }
 
     setEnviando(true);
-    setRespuestaForm({ texto: '', tipo: '' });
+    setEstadoMensaje(null);
 
     try {
-      const respuesta = await fetch('http://localhost:3000/api/contacto', {
+      const res = await fetch(`${API_URL}/contacto`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, mensaje })
+        body: JSON.stringify({
+          nombre: nombreLimpio,
+          email: emailLimpio,
+          consulta: consultaLimpia,
+          mensaje: consultaLimpia,
+        }),
       });
 
-      const datos = await respuesta.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (datos.success || respuesta.ok) {
-        setRespuestaForm({
-          texto: `¡Gracias ${nombre}! Tu mensaje fue enviado y guardado con éxito.`,
-          tipo: "success"
-        });
-        setNombre('');
-        setEmail('');
-        setMensaje('');
-      } else {
-        setRespuestaForm({ texto: "Hubo un problema al guardar el mensaje.", tipo: "error" });
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error || `Error HTTP ${res.status}`);
       }
-    } catch (error) {
-      console.error('Error de conexión:', error);
-      setRespuestaForm({
-        texto: "No se pudo conectar con el servidor backend.",
-        tipo: "error"
+
+      setNombre('');
+      setEmail('');
+      setMensaje('');
+      setEstadoMensaje({
+        tipo: 'exito',
+        texto: 'Mensaje enviado y guardado en MongoDB correctamente.',
+      });
+    } catch (err) {
+      setEstadoMensaje({
+        tipo: 'aviso',
+        texto:
+          err?.message && !err.message.includes('fetch')
+            ? `No se pudo guardar en MongoDB: ${err.message}`
+            : 'No se pudo conectar con el servidor para guardar en MongoDB. Verifica que el backend esté encendido y que VITE_API_URL sea correcta.',
       });
     } finally {
       setEnviando(false);
@@ -50,65 +66,66 @@ export default function FormularioContacto() {
   };
 
   return (
-    <section id="contacto" className="contact-section">
-      <div className="contact-card">
-        <div className="contact-header">
-          <h4 className="section-title"><span>Atención Directa</span></h4>
-          <p className="section-subtitle">Escribinos y te asesoramos al instante sobre tu próximo accesorio.</p>
+    <div className="atencion-card-final">
+      <div className="atencion-header-final">
+        <h2>Atención Directa</h2>
+        <p>Escribinos y te asesoramos al instante sobre tu próximo accesorio.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="atencion-form-final">
+        <div className="atencion-campo-final">
+          <label htmlFor="atencion-nombre">Nombre completo</label>
+          <input
+            id="atencion-nombre"
+            type="text"
+            placeholder="Tu nombre"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="nombre">Nombre completo</label>
-            <input
-              type="text"
-              id="nombre"
-              placeholder="Tu nombre"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              required
-            />
+        <div className="atencion-campo-final">
+          <label htmlFor="atencion-email">Correo electrónico</label>
+          <input
+            id="atencion-email"
+            type="email"
+            placeholder="Tu email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+
+        <div className="atencion-campo-final">
+          <label htmlFor="atencion-consulta">Consulta o accesorio que buscás</label>
+          <textarea
+            id="atencion-consulta"
+            rows="4"
+            placeholder="Tu mensaje"
+            value={mensaje}
+            onChange={(e) => setMensaje(e.target.value)}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="btn-enviar-mensaje-final"
+          disabled={enviando}
+        >
+          {enviando ? 'Enviando...' : 'Enviar Mensaje'}
+        </button>
+
+        {estadoMensaje && (
+          <div
+            className={`atencion-alerta-final ${
+              estadoMensaje.tipo === 'exito' ? 'alerta-ok' : 'alerta-aviso'
+            }`}
+          >
+            {estadoMensaje.texto}
           </div>
-
-          <div className="form-group">
-            <label htmlFor="email">Correo electrónico</label>
-            <input
-              type="email"
-              id="email"
-              placeholder="Tu email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="mensaje">Consulta o accesorio que buscás</label>
-            <textarea
-              id="mensaje"
-              placeholder="Tu mensaje"
-              value={mensaje}
-              onChange={(e) => setMensaje(e.target.value)}
-              required
-            ></textarea>
-          </div>
-
-          <button type="submit" id="submitBtn" disabled={enviando}>
-            {enviando ? "Enviando..." : "Enviar Mensaje"}
-          </button>
-
-          {respuestaForm.texto && (
-            <div
-              className="form-response visible"
-              style={{
-
-              }}
-            >
-              {respuestaForm.texto}
-            </div>
-          )}
-        </form>
-      </div>
-    </section>
+        )}
+      </form>
+    </div>
   );
 }
