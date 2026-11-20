@@ -7,3 +7,4 @@ Commit 9: Limpieza de archivos ignorados
 Commit 10: Pruebas de flujo de consultas
 Commit 11: Revision de animaciones
 Commit 12: Ajustes responsive en movil
+Commit 13: Revision de enlaces y rutas
