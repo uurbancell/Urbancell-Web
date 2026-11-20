@@ -5,3 +5,4 @@ Commit 7: Integracion de atencion directa
 Commit 8: Configuracion de backend y MongoDB
 Commit 9: Limpieza de archivos ignorados
 Commit 10: Pruebas de flujo de consultas
+Commit 11: Revision de animaciones
